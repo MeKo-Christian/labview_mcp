@@ -26,6 +26,9 @@
 			<Item Name="Test_WireLoops.vi" Type="VI" URL="../Scripting Server/Test_WireLoops.vi"/>
 			<Item Name="Test_StructureSubdiagramsAndDeleteObject.vi" Type="VI" URL="../Scripting Server/Test_StructureSubdiagramsAndDeleteObject.vi"/>
 		</Item>
+		<Item Name="Tools" Type="Folder">
+			<Item Name="Tools.lvlib" Type="Library" URL="../Tools/Tools.lvlib"/>
+		</Item>
 		<Item Name="Dependencies" Type="Dependencies"/>
 		<Item Name="Build Specifications" Type="Build"/>
 	</Item>

@@ -1,7 +1,5 @@
 ﻿<?xml version='1.0' encoding='UTF-8'?>
 <Library LVVersion="25008000">
-	<Property Name="NI.Lib.ContainingLib" Type="Str">Scripting Server.lvlib</Property>
-	<Property Name="NI.Lib.ContainingLibPath" Type="Str">../../Scripting Server.lvlib</Property>
 	<Property Name="NI.Lib.Icon" Type="Bin">*1#!!!!!!!)!"1!&amp;!!!-!%!!!@````]!!!!"!!%!!!*%!!!*Q(C=\&gt;7`43N"%-@R(U]%J/\AY1\13+\!%2%%&lt;G&amp;;=)K=Y*"U!BJQ#Y\)JQ5(./!7DO]OQYE`!C/^BS$ATHO=@XM\_`(&gt;[J$[&gt;C)&gt;;TCUT4\=0N@@S`44@D*'Y`CB0E_(W@"C`.P_M?/^`NHM6@VH]X-98I\`R^`X5@_"4&lt;`&lt;\`;^W^8"2@LF;`:)\56%3VL1H':K5QV*HO2*HO2*HO2"(O2"(O2"(O2/\O2/\O2/\O2'&lt;O2'&lt;O2'&lt;O2^*R?ZS%5/+:E]G3AJGB2),I;CZ*"Y%E`C34R]6?**0)EH]31?,F(C34S**`%E(I9J]33?R*.Y%A_FOC4\4IYH]6"?A3@Q"*\!%XC95I%H!!34"97$)D!5&gt;!9HA3@Q""Z/&amp;8A#4_!*0)'(&lt;A7?Q".Y!E`A95C`+^%V&lt;3@(1REZ(M@D?"S0Y['U()`D=4S/R`%QH2S0YX%1TI2/=1BS"DE8/&amp;]=D_0BDRS0YX%]DM@RU.7@E0=\UT2N*]&gt;D?!S0Y4%]BI=3-DS'R`!9(M.$72E?QW.Y$)`B93I:(M.D?!S)-3H4SSBG$$1O-A,$Q[?P&amp;ON0+&lt;L%_C\6YF5N3N6C5SUCV?*10846QV1^*.8.6^V5V=V3X146DV/B62D6*+L"\5,N/?ZI7^K'NK9N;1P;H$;F4&gt;L1`XTB@L`8&lt;L@4&gt;LP6:L02?LX7=LH59L(1@$\8&gt;$L6:$):8Q.`W==8QO.\[9LTVK\0&lt;OZ8ZZ&gt;(K`/,/^LJ[OTW\KGPN3`[8`I$XIX[I_&gt;VO5=0UPK.W1!!!!!</Property>
 	<Property Name="NI.Lib.SourceVersion" Type="Int">620789760</Property>
 	<Property Name="NI.Lib.Version" Type="Str">1.0.0.0</Property>
@@ -10,13 +8,15 @@
 </Property>
 	<Property Name="NI.LV.All.SourceOnly" Type="Bool">true</Property>
 	<Item Name="CTLs" Type="Folder">
-		<Item Name="Datatypes.ctl" Type="VI" URL="../../Datatypes.ctl"/>
+		<Item Name="Datatypes.ctl" Type="VI" URL="../Datatypes.ctl"/>
+		<Item Name="MCP Creator States.ctl" Type="VI" URL="../MCP Creator States.ctl"/>
+		<Item Name="Server Creator Data.ctl" Type="VI" URL="../Server Creator Data.ctl"/>
 	</Item>
 	<Item Name="SubVIs" Type="Folder">
 		<Item Name="Create Defaults String.vi" Type="VI" URL="../Create Defaults String.vi"/>
 		<Item Name="Create VI function name.vi" Type="VI" URL="../Create VI function name.vi"/>
 		<Item Name="format string.vi" Type="VI" URL="../format string.vi"/>
-		<Item Name="Get Datatype.vi" Type="VI" URL="../../Get Datatype.vi"/>
+		<Item Name="Get Datatype.vi" Type="VI" URL="../../Scripting Server/Get Datatype.vi"/>
 		<Item Name="Get Names String.vi" Type="VI" URL="../Get Names String.vi"/>
 		<Item Name="Get Parameter String.vi" Type="VI" URL="../Get Parameter String.vi"/>
 		<Item Name="get vi description.vi" Type="VI" URL="../get vi description.vi"/>
@@ -25,7 +25,13 @@
 		<Item Name="Is Float.vi" Type="VI" URL="../Is Float.vi"/>
 		<Item Name="Is Int.vi" Type="VI" URL="../Is Int.vi"/>
 		<Item Name="Is String.vi" Type="VI" URL="../Is String.vi"/>
-		<Item Name="Load VI.vi" Type="VI" URL="../../Load VI.vi"/>
+		<Item Name="Load VI.vi" Type="VI" URL="../../Scripting Server/Load VI.vi"/>
 	</Item>
-	<Item Name="Get Python Code.vi" Type="VI" URL="../../Get Python Code.vi"/>
+	<Item Name="Add Tool From VI.vi" Type="VI" URL="../Add Tool From VI.vi"/>
+	<Item Name="Get App Directory.vi" Type="VI" URL="../Get App Directory.vi"/>
+	<Item Name="Get Python Code.vi" Type="VI" URL="../Get Python Code.vi"/>
+	<Item Name="Get VI Function String.vi" Type="VI" URL="../Get VI Function String.vi"/>
+	<Item Name="Install Server.vi" Type="VI" URL="../Install Server.vi"/>
+	<Item Name="PyServer.lvclass" Type="LVClass" URL="../PyServer/PyServer.lvclass"/>
+	<Item Name="Update MCP Server.vi" Type="VI" URL="../Update MCP Server.vi"/>
 </Library>

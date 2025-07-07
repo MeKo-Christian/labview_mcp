@@ -210,7 +210,6 @@
 	</Item>
 	<Item Name="Tools" Type="Folder">
 		<Item Name="Write INI.vi" Type="VI" URL="../Write INI.vi"/>
-		<Item Name="Tools.lvlib" Type="Library" URL="../Tools/Tools.lvlib"/>
 	</Item>
 	<Item Name="Main.vi" Type="VI" URL="../Main.vi">
 		<Property Name="NI.LibItem.Scope" Type="Int">2</Property>
