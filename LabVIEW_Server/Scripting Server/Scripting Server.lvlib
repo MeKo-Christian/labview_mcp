@@ -69,6 +69,7 @@
 				<Item Name="get_allowed_paths (Reply Payload)--cluster.ctl" Type="VI" URL="../get_allowed_paths (Reply Payload)--cluster.ctl"/>
 				<Item Name="create_project Argument--cluster.ctl" Type="VI" URL="../create_project Argument--cluster.ctl"/>
 				<Item Name="create_project (Reply Payload)--cluster.ctl" Type="VI" URL="../create_project (Reply Payload)--cluster.ctl"/>
+				<Item Name="Set Allowed Paths Argument--cluster.ctl" Type="VI" URL="../Set Allowed Paths Argument--cluster.ctl"/>
 			</Item>
 			<Item Name="Broadcast" Type="Folder">
 				<Item Name="Did Init Argument--cluster.ctl" Type="VI" URL="../Did Init Argument--cluster.ctl"/>
@@ -110,6 +111,7 @@
 			<Item Name="Get Module Execution Status.vi" Type="VI" URL="../Get Module Execution Status.vi"/>
 			<Item Name="Show Diagram.vi" Type="VI" URL="../Show Diagram.vi"/>
 			<Item Name="Read Config Data.vi" Type="VI" URL="../Read Config Data.vi"/>
+			<Item Name="Set Allowed Paths.vi" Type="VI" URL="../Set Allowed Paths.vi"/>
 		</Item>
 		<Item Name="Start Module.vi" Type="VI" URL="../Start Module.vi"/>
 		<Item Name="Synchronize Module Events.vi" Type="VI" URL="../Synchronize Module Events.vi"/>
