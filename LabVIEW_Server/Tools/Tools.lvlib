@@ -13,25 +13,25 @@
 		<Item Name="Server Creator Data.ctl" Type="VI" URL="../Server Creator Data.ctl"/>
 	</Item>
 	<Item Name="SubVIs" Type="Folder">
+		<Item Name="Add Tool From VI.vi" Type="VI" URL="../Add Tool From VI.vi"/>
 		<Item Name="Create Defaults String.vi" Type="VI" URL="../Create Defaults String.vi"/>
 		<Item Name="Create VI function name.vi" Type="VI" URL="../Create VI function name.vi"/>
 		<Item Name="format string.vi" Type="VI" URL="../format string.vi"/>
+		<Item Name="Get App Directory.vi" Type="VI" URL="../Get App Directory.vi"/>
 		<Item Name="Get Datatype.vi" Type="VI" URL="../../Scripting Server/Get Datatype.vi"/>
 		<Item Name="Get Names String.vi" Type="VI" URL="../Get Names String.vi"/>
 		<Item Name="Get Parameter String.vi" Type="VI" URL="../Get Parameter String.vi"/>
 		<Item Name="get vi description.vi" Type="VI" URL="../get vi description.vi"/>
+		<Item Name="Get VI Function String.vi" Type="VI" URL="../Get VI Function String.vi"/>
 		<Item Name="Get VI In and Outputs.vi" Type="VI" URL="../Get VI In and Outputs.vi"/>
 		<Item Name="Get VIs.vi" Type="VI" URL="../Get VIs.vi"/>
 		<Item Name="Is Float.vi" Type="VI" URL="../Is Float.vi"/>
 		<Item Name="Is Int.vi" Type="VI" URL="../Is Int.vi"/>
 		<Item Name="Is String.vi" Type="VI" URL="../Is String.vi"/>
 		<Item Name="Load VI.vi" Type="VI" URL="../../Scripting Server/Load VI.vi"/>
+		<Item Name="PyServer.lvclass" Type="LVClass" URL="../PyServer/PyServer.lvclass"/>
 	</Item>
-	<Item Name="Add Tool From VI.vi" Type="VI" URL="../Add Tool From VI.vi"/>
-	<Item Name="Get App Directory.vi" Type="VI" URL="../Get App Directory.vi"/>
 	<Item Name="Get Python Code.vi" Type="VI" URL="../Get Python Code.vi"/>
-	<Item Name="Get VI Function String.vi" Type="VI" URL="../Get VI Function String.vi"/>
 	<Item Name="Install Server.vi" Type="VI" URL="../Install Server.vi"/>
-	<Item Name="PyServer.lvclass" Type="LVClass" URL="../PyServer/PyServer.lvclass"/>
 	<Item Name="Update MCP Server.vi" Type="VI" URL="../Update MCP Server.vi"/>
 </Library>

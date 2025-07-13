@@ -180,6 +180,7 @@
 		<Item Name="do get loop iteration terminal.vi" Type="VI" URL="../do get loop iteration terminal.vi"/>
 		<Item Name="Do Get Object Help.vi" Type="VI" URL="../Do Get Object Help.vi"/>
 		<Item Name="Do Get Structure Diagram.vi" Type="VI" URL="../Do Get Structure Diagram.vi"/>
+		<Item Name="Do Open Vi.vi" Type="VI" URL="../Do Open Vi.vi"/>
 		<Item Name="Do Remove From Selection.vi" Type="VI" URL="../Do Remove From Selection.vi"/>
 		<Item Name="Do Rename Object.vi" Type="VI" URL="../Do Rename Object.vi"/>
 		<Item Name="Do Run VI.vi" Type="VI" URL="../Do Run VI.vi"/>
@@ -219,5 +220,4 @@
 	<Item Name="Main.vi" Type="VI" URL="../Main.vi">
 		<Property Name="NI.LibItem.Scope" Type="Int">2</Property>
 	</Item>
-	<Item Name="Do Open Vi.vi" Type="VI" URL="../Do Open Vi.vi"/>
 </Library>
