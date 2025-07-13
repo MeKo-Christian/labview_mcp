@@ -4,7 +4,6 @@ import pythoncom
 from win32com.client import VARIANT
 mcp = FastMCP("LabVIEW Assistant")
 
-
 _labview = None
 _labview_err = None
 
@@ -59,7 +58,7 @@ def start_module() -> str:
 
 
 @mcp.tool()
-def new() -> str:
+def new_vi() -> str:
     """
     Creates a new VI in the LabVIEW IDE. The VI Reference is stored and returned. This Reference can later be used to e.g. add modifications to the VI.
     """
@@ -185,7 +184,7 @@ def get_object_terminals(object_id: int) -> str:
 
 
 @mcp.tool()
-def get(vi_reference: int) -> str:
+def get_vi_error_list(vi_reference: int) -> str:
     """
     Returns the current error list (list you see when clicking the run arrow) in a text format giving information about what on the block diagram needs to be fixed. Use this to see if your actions worked.
     """
@@ -216,7 +215,7 @@ def get(vi_reference: int) -> str:
 
 
 @mcp.tool()
-def cleanup(vi_reference: int) -> str:
+def cleanup_vi(vi_reference: int) -> str:
     """
     Cleans up the block diagram of a vi referenced by reference number. 
     """
@@ -280,7 +279,7 @@ When creating a control or constant you can pass a value to be written to that e
 
 
 @mcp.tool()
-def run(open_frontpanel: bool, vi_id: int) -> str:
+def run_vi(open_frontpanel: bool, vi_id: int) -> str:
     """
     Runs a VI specified by VI ID and brings the frontpanel to foreground if open_frontpanel is set to True.
     """
@@ -514,7 +513,7 @@ def delete_object(object_id: int) -> str:
 
 
 @mcp.tool()
-def save(path: str, vi_id: int) -> str:
+def save_vi(path: str, vi_id: int) -> str:
     """
     Saves a VI to the specified path. If Path is empty and vi was saved before, it saves to same location. Include the file name in the path.
     """
@@ -578,7 +577,7 @@ def set_value(value: str, object_id: int) -> str:
 
 
 @mcp.tool()
-def add_su(subvi_path: str, diagram_id: int) -> str:
+def add_subvi(subvi_path: str, diagram_id: int) -> str:
     """
     Adds a SubVI to a blockdiagram or sturcture subdiagram similar to the add_object method.
 
@@ -836,6 +835,39 @@ def get_allowed_paths() -> str:
 
 
 @mcp.tool()
+def open_vi(vi_path: str) -> str:
+    """
+    Opens a vi from inside the allowed paths and returns an id to further use it, similar to the new_vi tool.
+
+
+    """
+    lv_app  = get_labview()
+    vi_name = r"open_vi.vi"
+    current_dir = os.path.dirname(__file__)
+    vi_path = os.path.join(current_dir, "LabVIEW_Server", "Scripting Server", vi_name)
+    vi      = lv_app.GetVIReference(vi_path, "", False, 0)
+    vi._FlagAsMethod("Call2")
+
+    param_names  = VARIANT(
+        pythoncom.VT_BYREF | pythoncom.VT_ARRAY | pythoncom.VT_BSTR,
+        ("error out", "timed out?", "vi_id", "wait for reply (T)", "error in", "vi_path" )
+    )
+
+    param_values = VARIANT(
+        pythoncom.VT_BYREF | pythoncom.VT_ARRAY | pythoncom.VT_VARIANT,
+        ("", False, "", True, "", vi_path)
+    )
+
+    vi.Call2(param_names, param_values,
+            False,   # open FP?
+            False,   # close FP after call?
+            False,   # suspend on call?
+            False)   # bring LabVIEW to front?
+    
+    return param_values
+
+
+@mcp.tool()
 def create_project() -> str:
     """
     Creates a new Project and returns the id for further use.
@@ -895,7 +927,6 @@ def stop_module() -> str:
             False)   # bring LabVIEW to front?
     
     return param_values
-
 
 
 if __name__ == "__main__":
