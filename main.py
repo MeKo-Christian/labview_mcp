@@ -59,7 +59,7 @@ def start_module() -> str:
 
 
 @mcp.tool()
-def new() -> str:
+def new_vi() -> str:
     """
     Creates a new VI in the LabVIEW IDE. The VI Reference is stored and returned. This Reference can later be used to e.g. add modifications to the VI.
     """
@@ -185,7 +185,7 @@ def get_object_terminals(object_id: int) -> str:
 
 
 @mcp.tool()
-def get(vi_reference: int) -> str:
+def get_vi_error_list(vi_reference: int) -> str:
     """
     Returns the current error list (list you see when clicking the run arrow) in a text format giving information about what on the block diagram needs to be fixed. Use this to see if your actions worked.
     """
@@ -216,7 +216,7 @@ def get(vi_reference: int) -> str:
 
 
 @mcp.tool()
-def cleanup(vi_reference: int) -> str:
+def cleanup_vi(vi_reference: int) -> str:
     """
     Cleans up the block diagram of a vi referenced by reference number. 
     """
@@ -280,7 +280,7 @@ When creating a control or constant you can pass a value to be written to that e
 
 
 @mcp.tool()
-def run(open_frontpanel: bool, vi_id: int) -> str:
+def run_vi(open_frontpanel: bool, vi_id: int) -> str:
     """
     Runs a VI specified by VI ID and brings the frontpanel to foreground if open_frontpanel is set to True.
     """
@@ -514,7 +514,7 @@ def delete_object(object_id: int) -> str:
 
 
 @mcp.tool()
-def save(path: str, vi_id: int) -> str:
+def save_vi(path: str, vi_id: int) -> str:
     """
     Saves a VI to the specified path. If Path is empty and vi was saved before, it saves to same location. Include the file name in the path.
     """
@@ -578,7 +578,7 @@ def set_value(value: str, object_id: int) -> str:
 
 
 @mcp.tool()
-def add_su(subvi_path: str, diagram_id: int) -> str:
+def add_subvi(subvi_path: str, diagram_id: int) -> str:
     """
     Adds a SubVI to a blockdiagram or sturcture subdiagram similar to the add_object method.
 
