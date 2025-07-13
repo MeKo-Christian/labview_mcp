@@ -4,7 +4,6 @@ import pythoncom
 from win32com.client import VARIANT
 mcp = FastMCP("LabVIEW Assistant")
 
-
 _labview = None
 _labview_err = None
 
@@ -836,6 +835,39 @@ def get_allowed_paths() -> str:
 
 
 @mcp.tool()
+def open_vi(vi_path: str) -> str:
+    """
+    Opens a vi from inside the allowed paths and returns an id to further use it, similar to the new_vi tool.
+
+
+    """
+    lv_app  = get_labview()
+    vi_name = r"open_vi.vi"
+    current_dir = os.path.dirname(__file__)
+    vi_path = os.path.join(current_dir, "LabVIEW_Server", "Scripting Server", vi_name)
+    vi      = lv_app.GetVIReference(vi_path, "", False, 0)
+    vi._FlagAsMethod("Call2")
+
+    param_names  = VARIANT(
+        pythoncom.VT_BYREF | pythoncom.VT_ARRAY | pythoncom.VT_BSTR,
+        ("error out", "timed out?", "vi_id", "wait for reply (T)", "error in", "vi_path" )
+    )
+
+    param_values = VARIANT(
+        pythoncom.VT_BYREF | pythoncom.VT_ARRAY | pythoncom.VT_VARIANT,
+        ("", False, "", True, "", vi_path)
+    )
+
+    vi.Call2(param_names, param_values,
+            False,   # open FP?
+            False,   # close FP after call?
+            False,   # suspend on call?
+            False)   # bring LabVIEW to front?
+    
+    return param_values
+
+
+@mcp.tool()
 def create_project() -> str:
     """
     Creates a new Project and returns the id for further use.
@@ -895,7 +927,6 @@ def stop_module() -> str:
             False)   # bring LabVIEW to front?
     
     return param_values
-
 
 
 if __name__ == "__main__":
