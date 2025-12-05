@@ -1,4 +1,7 @@
-# IPC Protocol Documentation
+# IPC Protocol (DEPRECATED)
+
+> **Note:** This protocol was removed in favor of direct Python execution.
+> Retained for historical reference only.
 
 ## Overview
 

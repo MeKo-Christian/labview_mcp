@@ -4,7 +4,7 @@ A Model Context Protocol (MCP) server that enables Large Language Models (LLMs) 
 
 ## Overview
 
-This Go-based MCP server provides a clean, high-performance interface for LLMs to create, modify, and debug LabVIEW VIs. It uses a bridge architecture to integrate with LabVIEW's DQMH scripting modules via COM on Windows.
+This Go-based MCP server provides a clean, high-performance interface for LLMs to create, modify, and debug LabVIEW VIs. On Windows, it directly executes Python wrapper scripts that integrate with LabVIEW's DQMH scripting modules via COM.
 
 **Status:** ✅ Implementation complete, ready for Windows + LabVIEW validation
 
@@ -14,9 +14,6 @@ This Go-based MCP server provides a clean, high-performance interface for LLMs t
 Claude Desktop (MCP Client)
     ↓ stdio (JSON-RPC)
 Go MCP Server (bin/mcp-server)
-    ↓ spawns child process
-LabVIEW Bridge (bin/labview-bridge)
-    ↓ IPC: line-delimited JSON over stdin/stdout
     ↓ On Windows: exec.Command("python", "wrapper/<tool>.py")
 Python Wrapper Scripts (wrapper/*.py)
     ↓ WIN32COM (pywin32)
@@ -27,12 +24,12 @@ LabVIEW DQMH Module (LabVIEW_Server/Scripting Server/*.vi)
 
 ### Platform Behavior
 
-- **Linux/macOS**: Bridge returns canned responses (for development/testing)
-- **Windows**: Bridge executes Python wrappers that communicate with LabVIEW via COM
+- **Linux/macOS**: Returns canned stub responses (for development/testing)
+- **Windows**: Executes Python wrappers that communicate with LabVIEW via COM
 
 ## Prerequisites
 
-- **Go 1.21+** - For building the MCP server and bridge
+- **Go 1.21+** - For building the MCP server
 - **LabVIEW 2020+** - With DQMH scripting modules (Windows only)
 - **Python 3.8+** - For Windows COM integration (wrapper scripts)
 - **uv** - Fast Python package manager (recommended) or pip
@@ -50,13 +47,11 @@ cd labview_mcp
 # Download dependencies
 go mod download
 
-# Build both binaries
+# Build the MCP server
 go build -o bin/mcp-server ./cmd/mcp-server
-go build -o bin/labview-bridge ./cmd/labview-bridge
 
 # For Windows (cross-compile)
 GOOS=windows GOARCH=amd64 go build -o bin/mcp-server.exe ./cmd/mcp-server
-GOOS=windows GOARCH=amd64 go build -o bin/labview-bridge.exe ./cmd/labview-bridge
 ```
 
 ### 2. Windows Setup (for LabVIEW integration)
@@ -71,7 +66,6 @@ pip install pywin32
 # Deploy to Windows
 # Copy these files to your Windows machine:
 #   - bin/mcp-server.exe
-#   - bin/labview-bridge.exe
 #   - wrapper/*.py
 #   - LabVIEW_Server/
 #   - pyproject.toml (for uv sync on Windows)
@@ -216,15 +210,13 @@ Returns: Text list of errors and their locations
 ```text
 labview_mcp/
 ├── cmd/
-│   ├── mcp-server/         # MCP server entrypoint
-│   └── labview-bridge/     # Bridge process for LabVIEW integration
+│   └── mcp-server/         # MCP server entrypoint
 ├── internal/
 │   ├── mcpserver/          # MCP server implementation
 │   │   ├── server.go
 │   │   └── tools.go        # 8 tool definitions
-│   └── ipc/                # IPC protocol (line-delimited JSON)
-│       ├── protocol.go
-│       └── client.go
+│   └── python/             # Python script execution
+│       └── executor.go
 ├── wrapper/                # Python COM wrapper scripts (8 tools)
 │   ├── start_module.py
 │   ├── stop_module.py
@@ -239,7 +231,7 @@ labview_mcp/
 ├── docs/
 │   ├── tools.md            # Complete tool schema reference (29 tools)
 │   ├── vi-mapping.md       # LabVIEW VI → Python tool mapping
-│   └── ipc-protocol.md     # IPC protocol specification
+│   └── plans/              # Design documents
 ├── bin/                    # Build artifacts
 ├── go.mod
 ├── go.sum
@@ -251,14 +243,8 @@ labview_mcp/
 ### Running Locally
 
 ```bash
-# Run MCP server (standalone mode with stubs)
+# Run MCP server (standalone mode with stubs on Linux/macOS)
 go run ./cmd/mcp-server
-
-# Run bridge standalone
-go run ./cmd/labview-bridge
-
-# Test IPC round-trip
-echo '{"type":"request","id":"test1","tool":"ping","payload":{"message":"hello"}}' | go run ./cmd/labview-bridge
 ```
 
 ### Testing
@@ -276,36 +262,10 @@ go test -cover ./...
 1. Add tool schema to [docs/tools.md](docs/tools.md)
 2. Add handler in `internal/mcpserver/tools.go`
 3. Create Python wrapper in `wrapper/<tool>.py`
-4. Register in `cmd/mcp-server/main.go`
-5. Rebuild binaries
+4. Add canned response in `internal/python/executor.go`
+5. Rebuild binary
 
 ## How It Works
-
-### IPC Protocol
-
-The Go MCP server and bridge communicate via **line-delimited JSON** over stdin/stdout:
-
-**Request Format:**
-
-```json
-{
-  "type": "request",
-  "id": "unique-id",
-  "tool": "tool_name",
-  "payload": { "param1": "value1" }
-}
-```
-
-**Response Format:**
-
-```json
-{
-  "type": "response",
-  "id": "unique-id",
-  "payload": { "result": "value" },
-  "error": ""
-}
-```
 
 ### Python Wrapper Pattern
 
@@ -334,10 +294,10 @@ See [docs/vi-mapping.md](docs/vi-mapping.md) for complete VI documentation.
 
 ✅ **Completed:**
 
-- Phase A1-A3: Go MCP server with 8 core tools
-- Phase B1: IPC protocol and client library
-- Phase B2: Bridge process with canned responses
-- Phase B3: Python wrapper integration for Windows
+- Go MCP server with 8 core tools
+- Direct Python execution with platform detection
+- Python wrapper integration for Windows
+- Canned stub responses for Linux/macOS
 
 ⏳ **Pending:**
 
@@ -356,12 +316,12 @@ See [PLAN.md](PLAN.md) for detailed progress tracking.
 3. Ensure binary has execute permissions
 4. Restart Claude Desktop
 
-### Bridge fails on Windows
+### Python execution fails on Windows
 
 1. Verify Python is in PATH: `python --version`
 2. Check pywin32 is installed: `pip show pywin32`
 3. Ensure LabVIEW is running
-4. Check bridge logs (stderr output)
+4. Check stderr output for Python errors
 
 ### LabVIEW COM errors
 
@@ -374,7 +334,6 @@ See [PLAN.md](PLAN.md) for detailed progress tracking.
 
 - [docs/tools.md](docs/tools.md) - Complete tool schema reference (all 29 tools)
 - [docs/vi-mapping.md](docs/vi-mapping.md) - LabVIEW VI architecture and mapping
-- [docs/ipc-protocol.md](docs/ipc-protocol.md) - IPC protocol specification
 - [PLAN.md](PLAN.md) - Implementation roadmap and progress
 
 ## Contributing
