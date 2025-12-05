@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/MeKo-Christian/labview_mcp/internal/python"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -17,14 +18,17 @@ import (
 // - An Output struct with JSON tags for MCP result binding
 // - A handler function with signature: func(context.Context, *mcp.CallToolRequest, InputType) (*mcp.CallToolResult, OutputType, error)
 
-// callIPC is a helper function that calls the IPC bridge if available,
+// globalPythonExecutor is set by the server during initialization
+var globalPythonExecutor *python.Executor
+
+// callPython is a helper function that calls the Python executor if available,
 // otherwise returns the provided stub response.
-func callIPC[T any](ctx context.Context, toolName string, input interface{}, stubOutput T) (T, error) {
-	if globalIPCClient != nil {
-		respPayload, err := globalIPCClient.Call(ctx, toolName, input)
+func callPython[T any](ctx context.Context, toolName string, input interface{}, stubOutput T) (T, error) {
+	if globalPythonExecutor != nil {
+		respPayload, err := globalPythonExecutor.Call(ctx, toolName, input)
 		if err != nil {
 			var zero T
-			return zero, fmt.Errorf("IPC call failed: %w", err)
+			return zero, fmt.Errorf("Python execution failed: %w", err)
 		}
 
 		var output T
@@ -36,7 +40,7 @@ func callIPC[T any](ctx context.Context, toolName string, input interface{}, stu
 		return output, nil
 	}
 
-	// Return stub when no IPC client
+	// Return stub when no executor (shouldn't happen, but safe fallback)
 	return stubOutput, nil
 }
 
@@ -63,7 +67,7 @@ func StartModuleTool(
 	req *mcp.CallToolRequest,
 	input StartModuleInput,
 ) (*mcp.CallToolResult, StartModuleOutput, error) {
-	output, err := callIPC(ctx, "start_module", input, StartModuleOutput{
+	output, err := callPython(ctx, "start_module", input, StartModuleOutput{
 		Status:               "stub: module started",
 		ModuleAlreadyRunning: false,
 		ErrorOut:             "",
@@ -89,7 +93,7 @@ func StopModuleTool(
 	req *mcp.CallToolRequest,
 	input StopModuleInput,
 ) (*mcp.CallToolResult, StopModuleOutput, error) {
-	output, err := callIPC(ctx, "stop_module", input, StopModuleOutput{
+	output, err := callPython(ctx, "stop_module", input, StopModuleOutput{
 		Status:   "stub: module stopped",
 		ErrorOut: "",
 	})
@@ -119,7 +123,7 @@ func NewVITool(
 	req *mcp.CallToolRequest,
 	input NewVIInput,
 ) (*mcp.CallToolResult, NewVIOutput, error) {
-	output, err := callIPC(ctx, "new_vi", input, NewVIOutput{
+	output, err := callPython(ctx, "new_vi", input, NewVIOutput{
 		VIID:     0,
 		Result:   "stub: VI created",
 		TimedOut: false,
@@ -151,7 +155,7 @@ func AddObjectTool(
 	req *mcp.CallToolRequest,
 	input AddObjectInput,
 ) (*mcp.CallToolResult, AddObjectOutput, error) {
-	output, err := callIPC(ctx, "add_object", input, AddObjectOutput{
+	output, err := callPython(ctx, "add_object", input, AddObjectOutput{
 		ObjectID: 0,
 		Result:   fmt.Sprintf("stub: object '%s' added at (%d,%d)", input.ObjectName, input.PositionX, input.PositionY),
 		TimedOut: false,
@@ -183,7 +187,7 @@ func ConnectObjectsTool(
 	req *mcp.CallToolRequest,
 	input ConnectObjectsInput,
 ) (*mcp.CallToolResult, ConnectObjectsOutput, error) {
-	output, err := callIPC(ctx, "connect_objects", input, ConnectObjectsOutput{
+	output, err := callPython(ctx, "connect_objects", input, ConnectObjectsOutput{
 		Result:   "stub: connected objects",
 		TimedOut: false,
 		ErrorOut: "",
@@ -210,7 +214,7 @@ func SaveVITool(
 	req *mcp.CallToolRequest,
 	input SaveVIInput,
 ) (*mcp.CallToolResult, SaveVIOutput, error) {
-	output, err := callIPC(ctx, "save_vi", input, SaveVIOutput{
+	output, err := callPython(ctx, "save_vi", input, SaveVIOutput{
 		PathOut:  "stub: " + input.Path,
 		TimedOut: false,
 		ErrorOut: "",
@@ -240,7 +244,7 @@ func GetObjectTerminalsTool(
 	req *mcp.CallToolRequest,
 	input GetObjectTerminalsInput,
 ) (*mcp.CallToolResult, GetObjectTerminalsOutput, error) {
-	output, err := callIPC(ctx, "get_object_terminals", input, GetObjectTerminalsOutput{
+	output, err := callPython(ctx, "get_object_terminals", input, GetObjectTerminalsOutput{
 		Result:   "stub: terminal info for object",
 		TimedOut: false,
 		ErrorOut: "",
@@ -267,7 +271,7 @@ func GetVIErrorListTool(
 	req *mcp.CallToolRequest,
 	input GetVIErrorListInput,
 ) (*mcp.CallToolResult, GetVIErrorListOutput, error) {
-	output, err := callIPC(ctx, "get_vi_error_list", input, GetVIErrorListOutput{
+	output, err := callPython(ctx, "get_vi_error_list", input, GetVIErrorListOutput{
 		Result:   "stub: no errors",
 		TimedOut: false,
 		ErrorOut: "",

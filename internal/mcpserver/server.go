@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/MeKo-Christian/labview_mcp/internal/ipc"
+	"github.com/MeKo-Christian/labview_mcp/internal/python"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -17,21 +17,18 @@ var (
 )
 
 type Options struct {
-	Name      string
-	Version   string
-	IPCClient *ipc.Client // Optional IPC client for LabVIEW bridge communication
+	Name           string
+	Version        string
+	PythonExecutor *python.Executor
 }
 
 type Server struct {
-	s         *mcp.Server
-	stdio     *mcp.StdioTransport
-	http      *mcp.StreamableHTTPHandler
-	sse       *mcp.SSEHandler
-	ipcClient *ipc.Client
+	s              *mcp.Server
+	stdio          *mcp.StdioTransport
+	http           *mcp.StreamableHTTPHandler
+	sse            *mcp.SSEHandler
+	pythonExecutor *python.Executor
 }
-
-// Global IPC client for tool handlers to access
-var globalIPCClient *ipc.Client
 
 func New(opts Options) *Server {
 	if opts.Name == "" {
@@ -85,13 +82,13 @@ This server provides programmatic control over LabVIEW applications through the 
 	// Register all tools
 	registerTools(s)
 
-	// Set global IPC client for tool handlers
-	globalIPCClient = opts.IPCClient
+	// Set global Python executor for tool handlers
+	globalPythonExecutor = opts.PythonExecutor
 
 	return &Server{
-		s:         s,
-		stdio:     &mcp.StdioTransport{},
-		ipcClient: opts.IPCClient,
+		s:              s,
+		stdio:          &mcp.StdioTransport{},
+		pythonExecutor: opts.PythonExecutor,
 	}
 }
 
