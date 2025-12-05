@@ -1,10 +1,15 @@
+# Python dependencies for LabVIEW COM wrapper scripts
+# These scripts are standalone - not a Python package
+# Used only on Windows for COM integration with LabVIEW
+
 [project]
-name = "labview-assistant"
+name = "labview-mcp-wrappers"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
+description = "Python COM wrapper scripts for LabVIEW MCP server"
+requires-python = ">=3.8"
 dependencies = [
-    "mcp[cli]>=1.9.0",
-    "pywin32>=310",
+    "pywin32>=310; sys_platform == 'win32'",
 ]
+
+[tool.uv]
+package = false

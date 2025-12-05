@@ -821,3 +821,251 @@ Based on usage patterns and dependencies, recommended tools for initial Go imple
 1. `echo` - 1 input (Python-only)
 2. `stop_module` - 0 inputs
 3. `new_vi` - 0 inputs
+
+---
+
+## V1 Implementation Priority (Phase A3)
+
+Based on dependency analysis and usage patterns, tools are prioritized for the initial Go implementation.
+
+### Priority Tier 1: Foundation (MUST HAVE) 🔴
+
+These tools are **absolutely required** for any meaningful LabVIEW scripting:
+
+1. **`start_module`** 🔴 **V1 REQUIRED**
+   - **Priority**: P0 - Blocking
+   - **Rationale**: Required before ANY other operation. Initializes the DQMH server.
+   - **Dependencies**: None
+   - **Complexity**: Medium (7 parameters, module lifecycle)
+   - **Implementation**: Phase A3, Task 3.2
+
+2. **`new_vi`** 🔴 **V1 REQUIRED**
+   - **Priority**: P0 - Blocking
+   - **Rationale**: Creates a new VI. Foundation for all VI manipulation.
+   - **Dependencies**: Requires `start_module`
+   - **Complexity**: Low (0 inputs, returns vi_id)
+   - **Implementation**: Phase A3, Task 3.2
+
+3. **`add_object`** 🔴 **V1 REQUIRED**
+   - **Priority**: P0 - Blocking
+   - **Rationale**: Core functionality - adds nodes, controls, structures to VIs
+   - **Dependencies**: Requires `new_vi` or `get_structure_diagram`
+   - **Complexity**: High (4 inputs + 500+ object enum)
+   - **Implementation**: Phase A3, Task 3.2
+
+### Priority Tier 2: Core Functionality (SHOULD HAVE) 🟡
+
+These tools enable basic VI construction workflows:
+
+4. **`connect_objects`** 🟡 **V1 RECOMMENDED**
+   - **Priority**: P1 - High
+   - **Rationale**: Wiring is essential for functional VIs
+   - **Dependencies**: Requires `add_object` for objects to connect
+   - **Complexity**: Medium (5 inputs)
+   - **Best Practice**: Use with `get_object_terminals` for correct indices
+
+5. **`get_object_terminals`** 🟡 **V1 RECOMMENDED**
+   - **Priority**: P1 - High
+   - **Rationale**: Required for correct wiring with `connect_objects`
+   - **Dependencies**: Requires objects from `add_object`
+   - **Complexity**: Low (1 input, returns string)
+   - **Implementation**: Phase A3, Task 3.3
+
+6. **`save_vi`** 🟡 **V1 RECOMMENDED**
+   - **Priority**: P1 - High
+   - **Rationale**: Persist work, essential for usability
+   - **Dependencies**: Requires VI from `new_vi` or `open_vi`
+   - **Complexity**: Low (2 inputs)
+   - **Security**: Uses path validation
+
+7. **`get_vi_error_list`** 🟡 **V1 RECOMMENDED**
+   - **Priority**: P1 - High
+   - **Rationale**: Debugging - verify operations succeeded
+   - **Dependencies**: Requires VI reference
+   - **Complexity**: Low (1 input, returns error list)
+   - **Use Case**: Check for compile errors after modifications
+
+8. **`create_control`** 🟡 **V1 RECOMMENDED**
+   - **Priority**: P1 - High
+   - **Rationale**: Simplifies control/indicator/constant creation
+   - **Dependencies**: Requires node from `add_object`
+   - **Complexity**: Medium (3 inputs)
+   - **Alternative**: Can use `add_object` directly, but less ergonomic
+
+### Priority Tier 3: Quality of Life (NICE TO HAVE) 🟢
+
+These tools improve the development experience but aren't critical:
+
+9. **`cleanup_vi`** 🟢 **V1 OPTIONAL**
+   - **Priority**: P2 - Medium
+   - **Rationale**: Auto-arrange improves readability
+   - **Dependencies**: Requires VI reference
+   - **Complexity**: Low (1 input)
+
+10. **`set_value`** 🟢 **V1 OPTIONAL**
+    - **Priority**: P2 - Medium
+    - **Rationale**: Useful for setting default values
+    - **Dependencies**: Requires control/constant reference
+    - **Complexity**: Low (2 inputs)
+
+11. **`run_vi`** 🟢 **V1 OPTIONAL**
+    - **Priority**: P2 - Medium
+    - **Rationale**: Execute and test created VIs
+    - **Dependencies**: Requires runnable VI
+    - **Complexity**: Low (2 inputs)
+
+12. **`echo`** 🟢 **V1 OPTIONAL**
+    - **Priority**: P2 - Medium
+    - **Rationale**: Simple connectivity test (Python-only, no LabVIEW)
+    - **Dependencies**: None
+    - **Complexity**: Trivial (1 input)
+    - **Note**: Keep for testing, doesn't require IPC
+
+### Priority Tier 4: Advanced Features (DEFERRED) ⚪
+
+These tools enable advanced workflows but can wait for v2:
+
+13. **Selection Management** (clear, add, remove) ⚪ **V2+**
+    - **Priority**: P3 - Low
+    - **Rationale**: Used for `enclose_selection`, advanced workflow
+    - **Defer To**: V2 when implementing structure creation
+
+14. **`enclose_selection`** ⚪ **V2+**
+    - **Priority**: P3 - Low
+    - **Rationale**: Powerful but complex, requires selection management
+    - **Alternative**: Users can add structures first, then objects inside
+
+15. **Loop/Structure Helpers** ⚪ **V2+**
+    - Tools: `get_loop_conditional_terminal`, `show_conditional_terminal`, `get_loop_iteration_terminal`, `get_structure_diagram`
+    - **Priority**: P3 - Low
+    - **Rationale**: Useful for complex structures, not essential initially
+
+16. **`add_subvi`** ⚪ **V2+**
+    - **Priority**: P3 - Low
+    - **Rationale**: Requires existing VIs, advanced use case
+
+17. **`open_vi`** ⚪ **V2+**
+    - **Priority**: P3 - Low
+    - **Rationale**: Editing existing VIs, focus on creation first
+
+18. **`connect_to_pane`** ⚪ **V2+**
+    - **Priority**: P3 - Low
+    - **Rationale**: SubVI creation, advanced workflow
+
+19. **`rename_object`**, `delete_object` ⚪ **V2+**
+    - **Priority**: P3 - Low
+    - **Rationale**: Editing operations, less critical than creation
+
+20. **`get_object_help`** ⚪ **V2+**
+    - **Priority**: P3 - Low
+    - **Rationale**: Documentation lookup, nice but not essential
+
+21. **`get_allowed_paths`** ⚪ **V2+**
+    - **Priority**: P3 - Low
+    - **Rationale**: Security utility, handle internally initially
+
+22. **`create_project`** ⚪ **V2+**
+    - **Priority**: P3 - Low
+    - **Rationale**: Project management, advanced feature
+
+23. **`stop_module`** ⚪ **V2+**
+    - **Priority**: P4 - Nice to have
+    - **Rationale**: Cleanup, but Go can handle gracefully without explicit call
+    - **Note**: Implement for completeness, but not critical for basic operation
+
+---
+
+## V1 Implementation Recommendation
+
+### Minimal Viable Product (3 tools)
+
+For the **absolute minimum** v1 to demonstrate end-to-end Go → LabVIEW functionality:
+
+1. 🔴 `start_module` - Initialize system
+2. 🔴 `new_vi` - Create VI
+3. 🔴 `add_object` - Add content
+
+**Result**: Can create a VI with objects via Go MCP server
+
+### Recommended V1 (8 tools)
+
+For a **usable** v1 that enables basic VI construction:
+
+1. 🔴 `start_module` - Initialize
+2. 🔴 `new_vi` - Create VI
+3. 🔴 `add_object` - Add nodes/controls
+4. 🟡 `get_object_terminals` - Get wiring info
+5. 🟡 `connect_objects` - Wire objects
+6. 🟡 `save_vi` - Persist work
+7. 🟡 `get_vi_error_list` - Debug
+8. 🟢 `echo` - Test connectivity (trivial, no LabVIEW)
+
+**Result**: Can create, wire, save, and debug VIs via Go
+
+### Dependency Graph for V1
+
+```
+start_module (P0) ────┐
+                      ├──> new_vi (P0) ────┐
+                      │                     ├──> add_object (P0) ────┬──> get_object_terminals (P1)
+                      │                     │                        │
+                      │                     │                        └──> connect_objects (P1)
+                      │                     │
+                      │                     └──> save_vi (P1)
+                      │
+                      └──> get_vi_error_list (P1)
+
+echo (P2) ────> (standalone, no deps)
+```
+
+### Implementation Order for Phase A3
+
+1. **Task 3.2**: Implement `start_module`, `new_vi`, `add_object` (Foundation Tier)
+2. **Task 3.3**: Implement `echo` (simple test tool)
+3. **Task 3.3**: Implement `get_object_terminals`, `connect_objects`, `save_vi`, `get_vi_error_list` (Core Tier)
+4. **Task 3.4**: Build and deploy
+5. **Task 3.5**: Verify all 8 tools in Claude Desktop
+
+---
+
+## Rationale Summary
+
+### Why These Tools for V1?
+
+**Foundation Requirements**:
+- `start_module`: Mandatory pre-requisite
+- `new_vi`: Can't do anything without a VI
+- `add_object`: Core value proposition - add LabVIEW objects
+
+**Usability Requirements**:
+- `connect_objects`: Unwired objects are useless
+- `get_object_terminals`: Required for correct wiring
+- `save_vi`: Work persistence is essential
+- `get_vi_error_list`: Debugging is critical for LLM iteration
+
+**Testing Requirements**:
+- `echo`: Simple connectivity verification
+
+### Why Defer Others?
+
+**Selection Management** (clear/add/remove/enclose):
+- Complex workflow pattern
+- Can add structures then objects inside (workaround exists)
+- Defer to v2 when advanced structure manipulation is needed
+
+**Loop/Structure Helpers**:
+- Advanced scenarios
+- Users can work around by adding structures first
+- Focus v1 on basic VI construction
+
+**File/Project Management** (open_vi, create_project):
+- Focus on creation before editing
+- Projects are advanced organizational feature
+
+**Advanced Manipulation** (rename, delete, subvi, pane connection):
+- Editing operations less critical than creation
+- SubVI creation is advanced workflow
+
+**Utility/Inspection** (get_help, get_allowed_paths):
+- Nice to have but not blocking
+- Can handle internally without exposing to LLM initially

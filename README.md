@@ -1,343 +1,264 @@
-# LabVIEW MCP Server (Go Implementation)
+# LabVIEW MCP Server
 
-A high-performance Model Context Protocol (MCP) server written in Go that enables Large Language Models (LLMs) like Claude to interact with LabVIEW through a clean, well-defined API.
+A Model Context Protocol (MCP) server that enables Large Language Models (LLMs) like Claude to interact with LabVIEW through programmatic scripting.
 
-## 🎯 Project Status
+## Overview
 
-**This repository is currently being transformed from Python to Go.** The transformation follows a phased approach documented in [PLAN.md](PLAN.md).
+This Go-based MCP server provides a clean, high-performance interface for LLMs to create, modify, and debug LabVIEW VIs. It uses a bridge architecture to integrate with LabVIEW's DQMH scripting modules via COM on Windows.
 
-- ✅ **Phase A**: Go MCP server with stubbed tools
-- 🚧 **Phase B**: IPC layer and LabVIEW integration
-- ⏳ **Phase C**: Production deployment and optimization
+**Status:** ✅ Implementation complete, ready for Windows + LabVIEW validation
 
-See [PLAN.md](PLAN.md) for detailed implementation status and roadmap.
+## Architecture
 
----
+```text
+Claude Desktop (MCP Client)
+    ↓ stdio (JSON-RPC)
+Go MCP Server (bin/mcp-server)
+    ↓ spawns child process
+LabVIEW Bridge (bin/labview-bridge)
+    ↓ IPC: line-delimited JSON over stdin/stdout
+    ↓ On Windows: exec.Command("python", "wrapper/<tool>.py")
+Python Wrapper Scripts (wrapper/*.py)
+    ↓ WIN32COM (pywin32)
+LabVIEW Application
+    ↓ COM Call2 API
+LabVIEW DQMH Module (LabVIEW_Server/Scripting Server/*.vi)
+```
 
-## 🚀 Features
+### Platform Behavior
 
-- **High Performance**: Go-based MCP server with minimal overhead
-- **Clean Architecture**: Modular design with clear separation of concerns
-- **Flexible Integration**: Multiple LabVIEW integration options (COM, TCP, or Python adapter)
-- **Type Safety**: Strongly-typed tool definitions with comprehensive schema validation
-- **Cross-Platform**: Builds for Windows, Linux, and macOS
-- **Developer Friendly**: Comprehensive documentation and debugging tools
+- **Linux/macOS**: Bridge returns canned responses (for development/testing)
+- **Windows**: Bridge executes Python wrappers that communicate with LabVIEW via COM
 
----
+## Prerequisites
 
-## 📋 Prerequisites
-
-- **Go 1.21+** - For building the MCP server
-- **LabVIEW** - With DQMH modules configured
+- **Go 1.21+** - For building the MCP server and bridge
+- **LabVIEW 2020+** - With DQMH scripting modules (Windows only)
+- **Python 3.8+** - For Windows COM integration (wrapper scripts)
+- **uv** - Fast Python package manager (recommended) or pip
+- **pywin32** - Python Windows COM library (auto-installed via uv/pip)
 - **Claude Desktop** - Or any MCP-compatible client
-- **Windows** - Required for COM integration (or use TCP/HTTP alternative)
 
----
+## Installation
 
-## 🛠️ Installation
-
-### 1. Clone the Repository
+### 1. Clone and Build
 
 ```bash
 git clone https://github.com/MeKo-Christian/labview_mcp.git
 cd labview_mcp
-```
 
-### 2. Build the MCP Server
-
-```bash
-# Initialize Go modules
+# Download dependencies
 go mod download
 
-# Build for your platform
+# Build both binaries
 go build -o bin/mcp-server ./cmd/mcp-server
+go build -o bin/labview-bridge ./cmd/labview-bridge
 
-# Or build for Windows (cross-compile)
+# For Windows (cross-compile)
 GOOS=windows GOARCH=amd64 go build -o bin/mcp-server.exe ./cmd/mcp-server
+GOOS=windows GOARCH=amd64 go build -o bin/labview-bridge.exe ./cmd/labview-bridge
 ```
 
-### 3. Build the LabVIEW Bridge (Optional for Phase B+)
+### 2. Windows Setup (for LabVIEW integration)
 
 ```bash
-go build -o bin/labview-bridge ./cmd/labview-bridge
+# Install Python dependencies using uv (recommended)
+uv sync
+
+# Or use pip
+pip install pywin32
+
+# Deploy to Windows
+# Copy these files to your Windows machine:
+#   - bin/mcp-server.exe
+#   - bin/labview-bridge.exe
+#   - wrapper/*.py
+#   - LabVIEW_Server/
+#   - pyproject.toml (for uv sync on Windows)
+#   - uv.lock (for reproducible builds)
 ```
 
-### 4. Configure Claude Desktop
+### 3. Configure Claude Desktop
 
-Add the server to your Claude Desktop configuration file:
+Add to your Claude Desktop configuration:
 
 **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-
 **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-
 **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "labview": {
-      "command": "/path/to/labview_mcp/bin/mcp-server.exe",
+      "command": "C:\\path\\to\\labview_mcp\\bin\\mcp-server.exe",
       "args": []
     }
   }
 }
 ```
 
-### 5. Restart Claude Desktop
+### 4. Restart Claude Desktop
 
-Restart Claude Desktop to load the new MCP server. The LabVIEW tools should now appear in Claude's available tools.
+The LabVIEW tools will appear in Claude's available tools list.
 
----
+## Available Tools
 
-## 🔧 Architecture
-
-### High-Level Overview
-
-```text
-┌─────────────────┐
-│  Claude Desktop │
-│   (MCP Client)  │
-└────────┬────────┘
-         │ stdio (JSON-RPC)
-         ▼
-┌─────────────────────────┐
-│   MCP Server (Go)       │
-│  - Tool registration    │
-│  - Schema validation    │
-│  - Request routing      │
-└────────┬────────────────┘
-         │ IPC (JSON over pipes)
-         ▼
-┌─────────────────────────┐
-│  LabVIEW Bridge (Go)    │
-│  - IPC message handling │
-│  - LabVIEW integration  │
-└────────┬────────────────┘
-         │ COM / TCP / Python
-         ▼
-┌─────────────────────────┐
-│   LabVIEW DQMH Module   │
-│  - Request VIs          │
-│  - Server module        │
-└─────────────────────────┘
-```
-
-### Directory Structure
-
-```text
-labview_mcp/
-├── cmd/
-│   ├── mcp-server/          # Main MCP server entrypoint
-│   │   └── main.go
-│   └── labview-bridge/      # LabVIEW integration bridge
-│       └── main.go
-├── internal/
-│   ├── mcpserver/           # MCP server implementation
-│   │   ├── server.go
-│   │   └── tools.go         # Tool definitions
-│   ├── ipc/                 # IPC abstraction layer
-│   │   └── ipc.go
-│   ├── bridge/              # LabVIEW integration adapters
-│   │   ├── python_adapter.go
-│   │   ├── labview_com.go   # COM integration (Windows)
-│   │   └── labview_client.go # TCP/HTTP client
-│   └── logging/             # Structured logging
-│       └── logger.go
-├── docs/
-│   ├── tools.md             # Tool schema documentation
-│   ├── ipc-protocol.md      # IPC protocol specification
-│   └── architecture.md      # Detailed architecture docs
-├── bin/                     # Build artifacts (gitignored)
-├── LabVIEW_Server/          # LabVIEW DQMH modules
-├── scripts/                 # Python scripts (Phase B3 adapter)
-├── main.py                  # Legacy Python server (deprecated)
-├── go.mod
-├── go.sum
-├── PLAN.md                  # Implementation roadmap
-└── README.md
-```
-
----
-
-## 🧰 Available Tools
-
-The MCP server exposes LabVIEW functionality through tools. Each tool corresponds to a Request-and-wait-for-reply Event in the DQMH module.
-
-### Core Module Management
+### Module Management
 
 #### `start_module`
-Start the LabVIEW DQMH server module. **Call this first** before using any other LabVIEW tools.
+
+Start the LabVIEW DQMH scripting server. **Must be called first** before using other tools.
 
 ```json
-{
-  "tool": "start_module",
-  "parameters": {}
-}
+No parameters required
 ```
+
+Returns: Module status and configuration
 
 #### `stop_module`
-Stop the LabVIEW server module. Cleans up all resources and temporary data.
+
+Stop the LabVIEW scripting server and clean up resources.
 
 ```json
-{
-  "tool": "stop_module",
-  "parameters": {}
-}
+No parameters required
 ```
 
-### VI Creation and Manipulation
+Returns: Shutdown confirmation
+
+### VI Creation
 
 #### `new_vi`
-Create a new VI in the LabVIEW IDE and return its reference.
+
+Create a new VI in LabVIEW IDE.
+
+```json
+No parameters required
+```
+
+Returns: `vi_id` (integer reference to the created VI)
+
+#### `save_vi`
+
+Save a VI to disk.
 
 ```json
 {
-  "tool": "new_vi",
-  "parameters": {}
+  "vi_id": 123,
+  "path": "C:\\path\\to\\MyVI.vi"  // Empty string saves to previous location
 }
 ```
 
-**Returns**: `vi_id` (reference to the created VI)
+Returns: Saved file path
+
+### VI Modification
 
 #### `add_object`
+
 Add an object (control, function, structure) to a VI's block diagram or front panel.
 
 ```json
 {
-  "tool": "add_object",
-  "parameters": {
-    "vi_reference": "12345",
-    "object_name": "While Loop"
-  }
+  "diagram_id": 123,
+  "object_name": "While Loop",
+  "position_x": 100,
+  "position_y": 50
 }
 ```
 
-**Returns**: `object_id` (reference to the created object)
+Supports 500+ object types - see [docs/tools.md](docs/tools.md) for complete list.
+
+Returns: `object_id` (integer reference)
 
 #### `connect_objects`
+
 Connect two terminals with a wire on the block diagram.
 
 ```json
 {
-  "tool": "connect_objects",
-  "parameters": {
-    "vi_reference": "12345",
-    "from_object_reference": "67890",
-    "from_object_terminal_index": 0,
-    "to_object_reference": "11111",
-    "to_object_terminal_index": 0
-  }
+  "vi_reference": 123,
+  "from_object_reference": 456,
+  "from_object_terminal_index": 0,
+  "to_object_reference": 789,
+  "to_object_terminal_index": 1
 }
 ```
 
-#### `create_control`
-Create a control, indicator, or constant on a terminal.
+Returns: Connection confirmation
 
-```json
-{
-  "tool": "create_control",
-  "parameters": {
-    "object_id": "67890",
-    "terminal_index": 0,
-    "constant": false
-  }
-}
-```
-
-#### `run_vi`
-Execute a VI and optionally open its front panel.
-
-```json
-{
-  "tool": "run_vi",
-  "parameters": {
-    "vi_id": "12345",
-    "open_frontpanel": true
-  }
-}
-```
-
-### Debugging and Inspection
+### Debugging
 
 #### `get_object_terminals`
-Get information about an object's terminals (names, indices, descriptions).
+
+Get terminal names, descriptions, and indices for wiring.
 
 ```json
 {
-  "tool": "get_object_terminals",
-  "parameters": {
-    "object_id": "67890"
-  }
+  "object_id": 456
 }
 ```
+
+Returns: List of terminals with indices and descriptions
 
 #### `get_vi_error_list`
-Get the current error list for a VI (equivalent to clicking the broken run arrow).
+
+Get compile errors (equivalent to clicking the broken run arrow).
 
 ```json
 {
-  "tool": "get_vi_error_list",
-  "parameters": {
-    "vi_reference": "12345"
-  }
+  "vi_reference": 123
 }
 ```
 
-#### `cleanup_vi`
-Clean up the block diagram of a VI (auto-arrange objects and wires).
+Returns: Text list of errors and their locations
 
-```json
-{
-  "tool": "cleanup_vi",
-  "parameters": {
-    "vi_reference": "12345"
-  }
-}
+## Directory Structure
+
+```text
+labview_mcp/
+├── cmd/
+│   ├── mcp-server/         # MCP server entrypoint
+│   └── labview-bridge/     # Bridge process for LabVIEW integration
+├── internal/
+│   ├── mcpserver/          # MCP server implementation
+│   │   ├── server.go
+│   │   └── tools.go        # 8 tool definitions
+│   └── ipc/                # IPC protocol (line-delimited JSON)
+│       ├── protocol.go
+│       └── client.go
+├── wrapper/                # Python COM wrapper scripts (8 tools)
+│   ├── start_module.py
+│   ├── stop_module.py
+│   ├── new_vi.py
+│   ├── add_object.py
+│   ├── connect_objects.py
+│   ├── get_object_terminals.py
+│   ├── save_vi.py
+│   └── get_vi_error_list.py
+├── LabVIEW_Server/         # LabVIEW DQMH modules (29 Request VIs)
+│   └── Scripting Server/
+├── docs/
+│   ├── tools.md            # Complete tool schema reference (29 tools)
+│   ├── vi-mapping.md       # LabVIEW VI → Python tool mapping
+│   └── ipc-protocol.md     # IPC protocol specification
+├── bin/                    # Build artifacts
+├── go.mod
+├── go.sum
+└── README.md
 ```
 
-For a complete list of tools and their schemas, see [docs/tools.md](docs/tools.md).
+## Development
 
----
-
-## 🔌 LabVIEW Integration Options
-
-The Go bridge supports multiple integration approaches. Choose based on your requirements:
-
-### Option 1: Python Adapter (Quickest)
-Reuses existing Python COM integration code. Good for rapid development.
-
-**Pros**: Fast to implement, leverages existing code
-**Cons**: Requires Python runtime, additional process overhead
-
-### Option 2: Go COM Integration (Native)
-Direct COM integration using `go-ole` library. Best for production Windows deployments.
-
-**Pros**: Native performance, single binary, no Python dependency
-**Cons**: Windows-only, requires COM expertise
-
-### Option 3: TCP/HTTP Server VI (Most Flexible)
-LabVIEW VI listens on TCP/HTTP and processes JSON requests.
-
-**Pros**: Cross-platform, language-agnostic, network-capable
-**Cons**: Requires LabVIEW server VI development, network configuration
-
-See [PLAN.md - Phase B3](PLAN.md#phase-b3--replace-stub-bridge-logic-with-real-labview-calls-later) for implementation details.
-
----
-
-## 🧪 Development
-
-### Running in Development Mode
+### Running Locally
 
 ```bash
-# Run MCP server with debug logging
-go run ./cmd/mcp-server --debug
-
-# Test IPC output
-go run ./cmd/mcp-server --ipc-test
+# Run MCP server (standalone mode with stubs)
+go run ./cmd/mcp-server
 
 # Run bridge standalone
 go run ./cmd/labview-bridge
+
+# Test IPC round-trip
+echo '{"type":"request","id":"test1","tool":"ping","payload":{"message":"hello"}}' | go run ./cmd/labview-bridge
 ```
 
 ### Testing
@@ -346,85 +267,139 @@ go run ./cmd/labview-bridge
 # Run all tests
 go test ./...
 
-# Run tests with coverage
+# Run with coverage
 go test -cover ./...
-
-# Run specific package tests
-go test ./internal/ipc/...
 ```
 
-### Code Generation
+### Adding New Tools
 
-The LabVIEW project includes a code generation VI:
+1. Add tool schema to [docs/tools.md](docs/tools.md)
+2. Add handler in `internal/mcpserver/tools.go`
+3. Create Python wrapper in `wrapper/<tool>.py`
+4. Register in `cmd/mcp-server/main.go`
+5. Rebuild binaries
 
-1. Open `LabVIEW_Server/AI Assistant for LabVIEW.lvproj`
-2. Run `Generate Go Code.vi` (when available)
-3. Update tool definitions in `internal/mcpserver/tools.go`
-4. Rebuild the MCP server
+## How It Works
 
----
+### IPC Protocol
 
-## 📚 Documentation
+The Go MCP server and bridge communicate via **line-delimited JSON** over stdin/stdout:
 
-- [PLAN.md](PLAN.md) - Detailed transformation roadmap with todo-lists
-- [docs/tools.md](docs/tools.md) - Complete tool schema reference
+**Request Format:**
+
+```json
+{
+  "type": "request",
+  "id": "unique-id",
+  "tool": "tool_name",
+  "payload": { "param1": "value1" }
+}
+```
+
+**Response Format:**
+
+```json
+{
+  "type": "response",
+  "id": "unique-id",
+  "payload": { "result": "value" },
+  "error": ""
+}
+```
+
+### Python Wrapper Pattern
+
+Each wrapper script ([wrapper/](wrapper/)):
+
+1. Reads JSON from stdin
+2. Connects to LabVIEW: `win32com.client.Dispatch("LabVIEW.Application")`
+3. Gets VI reference: `GetVIReference("LabVIEW_Server/Scripting Server/<tool>.vi")`
+4. Calls VI via COM: `vi.Call2(param_names, param_values, ...)`
+5. Extracts results from `param_values` array
+6. Returns JSON to stdout
+
+### LabVIEW DQMH Architecture
+
+The LabVIEW server uses the **Delacor Queued Message Handler (DQMH)** pattern:
+
+- **Request VIs**: Public API (e.g., `new_vi.vi`, `add_object.vi`)
+- **Do VIs**: Internal implementation (e.g., `Do Create Control.vi`)
+- **Module VIs**: Lifecycle management (`Start Module.vi`, `Stop Module.vi`)
+
+All calls use the **Request-and-Wait-for-Reply** pattern with the `Call2` API.
+
+See [docs/vi-mapping.md](docs/vi-mapping.md) for complete VI documentation.
+
+## Implementation Status
+
+✅ **Completed:**
+
+- Phase A1-A3: Go MCP server with 8 core tools
+- Phase B1: IPC protocol and client library
+- Phase B2: Bridge process with canned responses
+- Phase B3: Python wrapper integration for Windows
+
+⏳ **Pending:**
+
+- Windows + LabVIEW validation testing
+- Remaining 21 tools (optional)
+- Performance optimization
+
+See [PLAN.md](PLAN.md) for detailed progress tracking.
+
+## Troubleshooting
+
+### Tools not appearing in Claude
+
+1. Check Claude Desktop logs: `~/.config/Claude/logs/`
+2. Verify MCP server path in `claude_desktop_config.json`
+3. Ensure binary has execute permissions
+4. Restart Claude Desktop
+
+### Bridge fails on Windows
+
+1. Verify Python is in PATH: `python --version`
+2. Check pywin32 is installed: `pip show pywin32`
+3. Ensure LabVIEW is running
+4. Check bridge logs (stderr output)
+
+### LabVIEW COM errors
+
+1. Ensure LabVIEW 2020+ is installed
+2. Enable scripting: Tools → Options → VI Server → Enable VI Scripting
+3. Check DQMH module is loaded: `LabVIEW_Server/Scripting Server/`
+4. Verify VI paths in wrapper scripts
+
+## Documentation
+
+- [docs/tools.md](docs/tools.md) - Complete tool schema reference (all 29 tools)
+- [docs/vi-mapping.md](docs/vi-mapping.md) - LabVIEW VI architecture and mapping
 - [docs/ipc-protocol.md](docs/ipc-protocol.md) - IPC protocol specification
-- [docs/architecture.md](docs/architecture.md) - Architecture deep-dive
+- [PLAN.md](PLAN.md) - Implementation roadmap and progress
 
----
+## Contributing
 
-## 🤝 Contributing
+Contributions are welcome! This project is actively maintained.
 
-This is an active transformation project. Contributions are welcome!
+1. Check [PLAN.md](PLAN.md) for current status
+2. Pick a task or feature
+3. Follow standard Go conventions (`gofmt`, `golint`)
+4. Write tests for new functionality
+5. Submit a PR
 
-### Development Workflow
+## License
 
-1. Check [PLAN.md](PLAN.md) for current implementation status
-2. Pick an uncompleted task or phase
-3. Follow the todo-list for that phase
-4. Submit a PR with your changes
+[To be specified]
 
-### Code Style
+## Acknowledgments
 
-- Follow standard Go conventions (`gofmt`, `golint`)
-- Write tests for new functionality
-- Document public APIs with godoc comments
-- Update [PLAN.md](PLAN.md) task checkboxes as you progress
-
----
-
-## 📝 License
-
-[Insert License Here]
-
----
-
-## 🙏 Acknowledgments
-
-- Built on the [Model Context Protocol](https://modelcontextprotocol.io/) specification
-- Uses the [Go MCP SDK](https://github.com/modelcontextprotocol/go-sdk)
+- Built on [Model Context Protocol](https://modelcontextprotocol.io/)
+- Uses [Go MCP SDK](https://github.com/modelcontextprotocol/go-sdk)
 - LabVIEW integration based on [DQMH framework](https://labviewwiki.org/wiki/Delacor_Queued_Message_Handler)
+- Original Python implementation by [CalmyJane](https://github.com/CalmyJane/labview_assistant)
 
----
-
-## 📧 Support
+## Support
 
 - **Issues**: [GitHub Issues](https://github.com/MeKo-Christian/labview_mcp/issues)
 - **Organization**: [MeKo-Tech](https://github.com/MeKo-Tech)
-- **Upstream**: Original Python implementation by [CalmyJane](https://github.com/CalmyJane/labview_assistant)
-
----
-
-## 🗺️ Roadmap
-
-- [x] Phase A1: Skeleton Go MCP server
-- [ ] Phase A2: Tool schema extraction
-- [ ] Phase A3: Stubbed tool implementation
-- [ ] Phase B1: IPC layer implementation
-- [ ] Phase B2: Bridge process with dummy responses
-- [ ] Phase B3: Real LabVIEW integration
-- [ ] Performance optimization
-- [ ] Production deployment
-- [ ] Deprecate Python implementation
-
-See [PLAN.md](PLAN.md) for detailed progress tracking.
+- **Author**: [@MeKo-Christian](https://github.com/MeKo-Christian)
