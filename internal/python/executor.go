@@ -14,6 +14,18 @@ import (
 	"log/slog"
 )
 
+// validToolNames is a whitelist of allowed tool names to prevent path traversal attacks.
+var validToolNames = map[string]bool{
+	"start_module":         true,
+	"stop_module":          true,
+	"new_vi":               true,
+	"add_object":           true,
+	"connect_objects":      true,
+	"save_vi":              true,
+	"get_object_terminals": true,
+	"get_vi_error_list":    true,
+}
+
 // Executor handles Python script execution with platform detection.
 type Executor struct {
 	wrapperDir string
@@ -39,8 +51,18 @@ func NewExecutor() (*Executor, error) {
 	}, nil
 }
 
+// IsWindows returns whether the executor is running on Windows.
+func (e *Executor) IsWindows() bool {
+	return e.isWindows
+}
+
 // Call executes a Python wrapper script on Windows or returns canned response on other platforms.
 func (e *Executor) Call(ctx context.Context, tool string, input interface{}) (json.RawMessage, error) {
+	// Validate tool name against whitelist to prevent path traversal attacks
+	if !validToolNames[tool] {
+		return nil, fmt.Errorf("invalid tool name: %s", tool)
+	}
+
 	if e.isWindows {
 		return e.callPython(ctx, tool, input)
 	}
@@ -137,7 +159,10 @@ func (e *Executor) cannedResponse(tool string, input interface{}) (json.RawMessa
 			PositionX  int    `json:"position_x"`
 			PositionY  int    `json:"position_y"`
 		}
-		inputBytes, _ := json.Marshal(input)
+		inputBytes, err := json.Marshal(input)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal add_object input: %w", err)
+		}
 		if err := json.Unmarshal(inputBytes, &addInput); err == nil {
 			response = map[string]interface{}{
 				"object_id": 123,
@@ -161,7 +186,10 @@ func (e *Executor) cannedResponse(tool string, input interface{}) (json.RawMessa
 		var saveInput struct {
 			Path string `json:"path"`
 		}
-		inputBytes, _ := json.Marshal(input)
+		inputBytes, err := json.Marshal(input)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal save_vi input: %w", err)
+		}
 		if err := json.Unmarshal(inputBytes, &saveInput); err == nil {
 			response = map[string]interface{}{
 				"path_out":  fmt.Sprintf("stub: saved to %s", saveInput.Path),
