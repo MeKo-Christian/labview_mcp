@@ -55,9 +55,9 @@ type StartModuleInput struct {
 
 // StartModuleOutput defines the output for start_module tool
 type StartModuleOutput struct {
-	Status              string `json:"status" jsonschema:"Status of the module startup"`
+	Status               string `json:"status" jsonschema:"Status of the module startup"`
 	ModuleAlreadyRunning bool   `json:"module_already_running,omitempty" jsonschema:"Whether the module was already running"`
-	ErrorOut            string `json:"error_out,omitempty" jsonschema:"Error message if any"`
+	ErrorOut             string `json:"error_out,omitempty" jsonschema:"Error message if any"`
 }
 
 // StartModuleTool initializes the LabVIEW DQMH server module.
